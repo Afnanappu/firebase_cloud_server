@@ -3,7 +3,7 @@ import fs from "fs"
 import path from "path";
 import pathUtil from "../utils/pathUtil.js"
 const __dirname = pathUtil(import.meta.url).__dirname;
-const serviceAccount = JSON.parse(fs.readFileSync(path.join(__dirname, "../AfnanServiceAccount.json"), 'utf-8'));
+const serviceAccount = JSON.parse(fs.readFileSync(path.join(__dirname, "../serviceAccount.json"), 'utf-8'));
 import errorCreator from "../utils/error.js";
 import HttpStatus from "../utils/statusCodes.js";
 import notificationMessageCreator from "../utils/notificationMessageCreator.js";
