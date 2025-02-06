@@ -28,7 +28,6 @@ export const singleNotification = async (req, res, next) => {
             .doc(uid)
             .get();
 
-        // const token = "fblzuHJdRHCHqFQh1iiG9B:APA91bEtVVFxacSwWVS5HxkbMlW9x0exvVG1__SPnIP_JNgUJxmnx1uLpwT38IFrVpo3hDPMHd5jAqW4o5D3f9Zr4HvJLYyAM_GdckbqY2NjWox6YXDY97s";
         const token = doc.data()?.fcmToken;
         console.log(token);
 
@@ -43,7 +42,7 @@ export const singleNotification = async (req, res, next) => {
         const firebaseResponse = await admin.messaging().send(message);
 
         // Optional: Log notification in Firestore
-        await admin.firestore().collection('notifications').add({
+        await admin.firestore().collection(collection).doc(uid).collection('notifications').add({
             uid: uid,
             title: title,
             body: body || {},
@@ -60,3 +59,96 @@ export const singleNotification = async (req, res, next) => {
         next(err)
     }
 }
+
+export const bulkNotification = async (req, res, next) => {
+    try {
+        const { ids, title, body, data, collection } = req.body;
+        console.log(req.body);
+
+        if (!ids || !ids.length || !title || !collection) {
+            errorCreator("uid , title  and collection are required", HttpStatus.BAD_REQUEST);
+            return;
+        }
+        const validIds = [...(new Set(ids.filter(id => id)))]
+
+        const tokens = await Promise.all(
+            validIds.map(async (id) => {
+                const userDoc = await admin.firestore()
+                    .collection(collection)
+                    .doc(id)
+                    .get();
+                return userDoc.data()?.fcmToken;
+            })
+        );
+
+        const validTokens = tokens.filter(token => token)
+        console.log(validTokens)
+
+        if (!validTokens.length) {
+            errorCreator("all tokens are invalid", HttpStatus.NOT_FOUND);
+            return;
+        }
+
+        const messages = validTokens.map(token => notificationMessageCreator(title, token, body, data));
+
+        const firebaseResponse = await admin.messaging().sendEach(messages)
+
+        
+
+        // Optional: Log notification in Firestore
+
+        validIds.forEach(async (id) => {
+            await admin.firestore().collection(collection).doc(id).collection('notifications').add({
+                uid: id,
+                title: title,
+                body: body || {},
+                sentTo: collection,
+                sentAt: admin.firestore.FieldValue.serverTimestamp(),
+                status: 'sent'
+            });
+        });
+
+        res.status(HttpStatus.OK).json({
+            success: true,
+            messageId: firebaseResponse
+        });
+    } catch (err) {
+        next(err)
+    }
+}
+
+
+
+
+
+/*
+ const { userIds, title, body, data } = req.body;
+
+        const tokens = await Promise.all(
+            userIds.map(async (userId) => {
+                const userDoc = await admin.firestore()
+                    .collection('users')
+                    .doc(userId)
+                    .get();
+                return userDoc.data()?.fcmToken;
+            })
+        );
+
+        const validTokens = tokens.filter(token => token);
+
+        if (validTokens.length === 0) {
+            return res.status(404).json({ error: 'No valid tokens found' });
+        }
+
+        const messages = validTokens.map(token => ({
+            notification: {
+                title: title || 'StayScape Notification',
+                body: body || 'You have a new notification'
+            },
+            token: token,
+            data: data || {}
+        }));
+
+        const response = await admin.messaging().sendAll(messages);
+
+*/

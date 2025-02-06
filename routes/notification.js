@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { singleNotification } from "../controllers/notificationController.js";
+import { singleNotification, bulkNotification } from "../controllers/notificationController.js";
 
 const router = Router()
 
-router.post('/single',singleNotification)
+router.post('/single', singleNotification)
+router.post('/bulk', bulkNotification)
 
 
 export default router;

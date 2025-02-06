@@ -3,28 +3,28 @@ import { config } from "dotenv";
 config()
 
 const transporter = createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.NODEMAILER_USER,
-        pass: process.env.NODEMAILER_PASSWORD,
-    },
+  service: "gmail",
+  auth: {
+    user: process.env.NODEMAILER_USER,
+    pass: process.env.NODEMAILER_PASSWORD,
+  },
 });
 
-const sendMailService = async (to, subject, text,html) => {
-    const info = await transporter.sendMail({
-        from: process.env.NODEMAILER_USER,
-        to,
-        subject,
-        text,
-        html:html || httpGenerator(subject, text)
-    })
+const sendMailService = async (to, subject, text, html) => {
+  const info = await transporter.sendMail({
+    from: process.env.NODEMAILER_USER,
+    to,
+    subject,
+    text,
+    html: html || httpGenerator(subject, text)
+  })
 
-    return info;
+  return info;
 }
 
 
 const httpGenerator = (subject, text) => {
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
